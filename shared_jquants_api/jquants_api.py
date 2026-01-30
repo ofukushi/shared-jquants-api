@@ -63,19 +63,25 @@ class JQuantsAPI:
         headers = self._headers()
 
         data: list = []
+        page_count = 0
+        logging.info("fetch_statements using API_SLEEP_SEC=%s", self.api_sleep_sec)
         payload = self._get_with_retry(url, params=params, timeout=30)
         if payload is None:
             raise RequestException("Failed to fetch statements after retries.")
         data += payload.get("data", [])
+        page_count += 1
 
         while "pagination_key" in payload or "paginationKey" in payload:
             pagination_key = payload.get("pagination_key") or payload.get("paginationKey")
             params["pagination_key"] = pagination_key
+            logging.info("fetch_statements pagination_key=%s", pagination_key)
             payload = self._get_with_retry(url, params=params, timeout=30)
             if payload is None:
                 raise RequestException("Failed to fetch statements pagination after retries.")
             data += payload.get("data", [])
+            page_count += 1
 
+        logging.info("fetch_statements fetched %d pages, %d records.", page_count, len(data))
         return {"statements": data}
 
     def _get_with_retry(self, url: str, params: dict[str, str], timeout: int) -> dict[str, Any] | None:
