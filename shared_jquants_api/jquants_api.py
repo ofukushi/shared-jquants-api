@@ -49,6 +49,27 @@ class JQuantsAPI:
             return None
         return data[0]
 
+    def fetch_equities_master_all(self, date: str | None = None) -> list[dict[str, Any]]:
+        params = {"date": self._normalize_date(date)}
+        url = f"{self.base_url}/equities/master"
+
+        data: list[dict[str, Any]] = []
+        payload = self._get_with_retry(url, params=params, timeout=30)
+        if payload is None:
+            raise RequestException("Failed to fetch equities master after retries.")
+        data += payload.get("data", [])
+
+        while "pagination_key" in payload or "paginationKey" in payload:
+            pagination_key = payload.get("pagination_key") or payload.get("paginationKey")
+            params["pagination_key"] = pagination_key
+            payload = self._get_with_retry(url, params=params, timeout=30)
+            if payload is None:
+                raise RequestException("Failed to fetch equities master pagination after retries.")
+            data += payload.get("data", [])
+
+        logging.info("fetch_equities_master_all fetched %d records.", len(data))
+        return data
+
     def fetch_statements(self, code: str | None = None, date: str | None = None) -> dict[str, list]:
         if not code and not date:
             raise ValueError("Either code or date must be provided.")
