@@ -103,7 +103,7 @@ class JQuantsAPI:
             page_count += 1
 
         logging.info("fetch_statements fetched %d pages, %d records.", page_count, len(data))
-        return {"statements": data}
+        return {"data": data}
 
     def _get_with_retry(self, url: str, params: dict[str, str], timeout: int) -> dict[str, Any] | None:
         headers = self._headers()
